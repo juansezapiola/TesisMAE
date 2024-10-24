@@ -73,13 +73,13 @@ order hhid EA_ID plotnum zaocode s4aq19 s4aq20 s4aq21_1 s4aq21_2 s4aq22 s4aq23 /
 sort EA_ID //order based on ea_id
 
 *Info from ea_id 
-tab EA_ID 
+tab EA_ID //hay 285 ea's 
 describe EA_ID //str10
 mdesc EA_ID // no missings
 tab zaocode s4aq19
 
 * Check missings
-	*ssc install mdesc // help mdesc
+*ssc install mdesc 
 mdesc s4aq19 //Bought seeds? Y/N (31/5704 missings)
 mdesc s4aq22 // no missings
 drop if s4aq19==. //drop those observations that did not respond 
