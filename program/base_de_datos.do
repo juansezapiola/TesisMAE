@@ -101,10 +101,184 @@ drop if crop_code_R4==.
 
 
 *pruebo 
-keep case_id y2_hhid y3_hhid y4_hhid ea_id latitude longitude ag_h0b ag_h0c_R2 crop_code_R3 crop_code_R4 
+keep case_id y2_hhid y3_hhid y4_hhid ea_id latitude longitude ag_h0b ag_h01a ag_h01b ag_h0c_R2 ag_h01a_R2 ag_h01b_R2 crop_code_R3 ag_h01a_R3 ag_h01b_R3 crop_code_R4 ag_h01a_R4 ag_h01b_R4
+
+*drop missings 
+
+mdesc ag_h01b
+drop if ag_h01b==.
+drop if ag_h01b==9
+
+mdesc ag_h01b_R2
+drop if ag_h01b_R2==. 
+drop if ag_h01b_R2==9
+
+mdesc ag_h01b_R3
+drop if ag_h01b_R3==. 
+
+mdesc ag_h01b_R4
+drop if ag_h01b_R4==.
+
+*All units to one (KG)
+/* R1, R2, R3 & R4 
+CODES FOR
+UNIT:
+GRAM........1
+KILOGRAM....2
+2 KG BAG....3
+3 KG BAG....4
+3.7 KG BAG..5
+5 KG BAG....6
+10 KG BAG...7
+50 KG BAG...8
+OTHER
+(SPECIFY)...9
+*/
+
+*gram to kg:
+
+forvalues round = 1/4 {
+    local var_a = "ag_h01a"  // Base variable
+    local var_b = "ag_h01b"  // Condition variable
+
+    // Adjust variable names for rounds 2, 3, and 4
+    if `round' > 1 {
+        local var_a = "ag_h01a_R`round'"
+        local var_b = "ag_h01b_R`round'"
+    }
+
+    replace `var_a' = `var_a' / 1000 if `var_b' == 1
+    replace `var_a' = `var_a' * 2 if `var_b' == 3
+    replace `var_a' = `var_a' * 3 if `var_b' == 4
+    replace `var_a' = `var_a' * 3.7 if `var_b' == 5
+    replace `var_a' = `var_a' * 5 if `var_b' == 6
+    replace `var_a' = `var_a' * 10 if `var_b' == 7
+    replace `var_a' = `var_a' * 50 if `var_b' == 8
+}
+*Now everything is in kg, so lets drop unit variables
+
+drop ag_h01b ag_h01b_R2 ag_h01b_R3 ag_h01b_R4
 
 
 
+* 1-A) Merging Other databases 
+*==============================================================================*
+
+
+
+
+
+
+* 2) Identification of Improved seeds 
+*==============================================================================*
+
+
+rename ag_h0b seed_R1
+rename ag_h0c_R2 seed_R2
+rename crop_code_R3 seed_R3
+rename crop_code_R4 seed_R4
+
+*We have the seed names, each classified to a specific number:
+
+codebook seed_R1
+label list AG_H0B
+
+codebook seed_R2
+label list AG_H0C
+
+codebook seed_R3
+label list crop_complete
+
+codebook seed_R4
+label list ag_H_seed_roster__id
+
+/* R1, R2, R3 & R4 seeds
+
+           1 MAIZE LOCAL
+           2 CMAIZE OMPOSITE/OPV
+3 MAIZE HYBRID
+4 MAIZE HYBRID RECYCLED
+           5 TOBACCO BURLEY
+		   6 TOBACCO FLUE CURED
+           7 TOBACCO NNDF
+           8 TOBACCO SDF
+           9 TOBACCO ORIENTAL
+          10 OTHER TOBACCO (SPECIFY)
+          11 GROUNDNUT CHALIMBANA
+12 GROUNDNUT CG7
+13 GROUNDNUT MANIPINTA
+14 GROUNDNUT MAWANGA
+15 GROUNDNUT JL24
+          16 OTHER GROUNDNUT (SPECIFY)
+          17 RICE LOCAL
+18 RICE FAYA
+19 RICE PUSSA
+20 RICE TCG10
+21 RICE IET4094 (SENGA)
+          22 RICE WAMBONE
+          23 RICE KILOMBERO
+24 RICE ITA
+          25 RICE MTUPATUPA
+          26 OTHER RICE (SPECIFY)
+          27 GROUND BEAN(NZAMA)
+          28 SWEET POTATO
+          29 IRISH [MALAWI] POTATO
+          30 WHEAT
+          31 FINGER MILLET(MAWERE)
+          32 SORGHUM
+          33 PEARL MILLET(MCHEWERE)
+          34 BEANS
+          35 SOYABEAN
+          36 PIGEONPEA(NANDOLO)
+          37 COTTON
+          38 SUNFLOWER
+          39 SUGAR CANE
+          40 CABBAGE
+          41 TANAPOSI
+          42 NKHWANI
+          43 THERERE/OKRA
+          44 TOMATO
+          45 ONION
+          46 PEA
+          47 PAPRIKA
+          48 OTHER (SPECIFY)
+
+		  Malawi Integrated Household Panel Survey 2013, Agriculture and Fishery Enumerator Manual (ANNEX 3)
+*/
+
+*We need to identify the seeds that are improved:
+
+forvalues round = 1/4 {
+    // Generate the new variable for each round
+    gen improved_R`round' = .
+    
+    // Replace the variable based on the values in seed_R
+    replace improved_R`round' = 1 if inlist(seed_R`round', 3, 4, 12, 13, 14, 15, 18, 19, 20, 21, 24)
+	replace improved_R`round' = 0 if improved_R`round'==.
+}
+
+
+
+
+
+* 3) Aggregation
+*==============================================================================*
+
+bysort ea_id: gen n=_n
+ 
+bysort ea_id: egen total_kg_R1= total(ag_h01a * (improved_R1 == 1))
+
+bysort ea_id: egen total_kg_R2= total(ag_h01a_R2 * (improved_R2 == 1))
+
+bysort ea_id: egen total_kg_R3= total(ag_h01a_R3 * (improved_R3 == 1))
+
+bysort ea_id: egen total_kg_R4= total(ag_h01a_R4 * (improved_R4 == 1))
+
+
+keep if n== 1
+
+
+drop seed_R1 ag_h01a seed_R2 ag_h01a_R2 seed_R3 ag_h01a_R3 seed_R4 ag_h01a_R4 improved_R1 improved_R2 improved_R3 improved_R4 n
 
 
 
