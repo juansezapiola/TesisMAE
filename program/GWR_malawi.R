@@ -1,4 +1,9 @@
-
+################################################################################
+####                 GWR: Spatial heterogeneity in Malawi                   ####
+####                          Thesis MEcon - UdeSA                          ####
+####                                 2024                                   ####
+####                          Juan Segundo Zapiola                          ####
+################################################################################
 
 rm(list=ls())
 
@@ -21,7 +26,7 @@ library(haven)
 data <- read_dta("prop_improved.dta")
 data_sf <- st_as_sf(data, coords = c("longitude", "latitude"), crs = 4326)
 
-# Define Coordenates of Malawi
+# Define Coordinates of Malawi
 latitud <- c(-9.367308, -17.129398)
 longitud <- c(32.673950, 35.918573) 
   
@@ -161,7 +166,7 @@ malawi_boundary <- st_boundary(malawi_shapefile)
 
 
 
-#This is better
+#Plot R1
 par(mar = c(5, 4, 4, 8)) 
 plot(malawi_proj)
 image(gwr.cv1$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
@@ -176,4 +181,218 @@ legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside th
 
 
 
+############## R2
+
+#histogram of proportion of improved seeds in R2
+histogram_R2 <- ggplot(data_sf,aes(x=prop_imp_R2)) +
+  geom_histogram(bins=50,aes(y=..density..)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histogram_R2
+
+
+# lineal regression:
+mod.lin_R2 <- lm(prop_imp_R2 ~ 1, data = data_sf)
+summary(mod.lin_R2)
+
+# calculamos el tes I de Moran 
+moran.test(mod.lin_R2$residuals, listw = nb.neig.dist, zero.policy = T)
+
+
+#plot 
+res_z <- mod.lin_R2$residuals - mean(mod.lin_R2$residuals)
+lag_res <- lag.listw(nb.neig.dist, res_z)
+valor.moran <- lm(lag_res ~ res_z)
+summary(valor.moran)
+moran.diag_R2 <- ggplot() + aes(res_z, lag_res) +
+  geom_point(shape = 19, size = 3, show.legend = T) +
+  geom_point(color='darkblue') +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_vline(xintercept=0, linetype="dashed", color = "black") +
+  labs(title = "Diagrama I de Moran", x = "residuos", y = "W.residuos")
+moran.diag_R2
+
+gwr.fix_R2 <- gwr.basic(prop_imp_R2 ~ 1, data=data_sp, 
+                     bw = 225, kernel = "tricube", adaptive = TRUE)
+print(gwr.fix_R2)
+data1_R2 <- as.data.frame(gwr.fix_R2$SDF)
+histo.beta_prop_R2 <- ggplot(data1_R2,aes(x=Intercept)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histo.beta_prop_R2
+
+# Bandwidth elegido por CV
+bw.1_R2 <- bw.gwr(prop_imp_R2 ~ 1, data=data_sp,
+               approach = "CV",kernel = "tricube", adaptive = TRUE)
+bw.1_R2
+gwr.cv_R2 <- gwr.basic(prop_imp_R2 ~ 1, data=data_sp,
+                    bw = bw.1, kernel = "tricube", adaptive = TRUE)
+print(gwr.cv_R2)
+data2_R2 <- as.data.frame(gwr.cv_R2$SDF)
+histo.beta_prop2_R2 <- ggplot(data2_R2,aes(x=Intercept)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histo.beta_prop2_R2
+
+
+
+gwr.fix1_R2 <- gwr.basic(prop_imp_R2 ~ 1, data=data_sp, regression.points=grid, 
+                      bw = 225, kernel = "tricube", adaptive = TRUE)
+gwr.cv1_R2 <- gwr.basic(prop_imp_R2 ~ 1, data=data_sp, regression.points=grid, 
+                     bw = bw.1_R2, kernel = "tricube", adaptive = TRUE)
+
+#plot
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1_R2$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1_R2$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1_R2$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1_R2$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
+
+
+############## R3
+
+gwr.fix_R3 <- gwr.basic(prop_imp_R3 ~ 1, data=data_sp, 
+                        bw = 225, kernel = "tricube", adaptive = TRUE)
+print(gwr.fix_R3)
+data1_R3 <- as.data.frame(gwr.fix_R3$SDF)
+histo.beta_prop_R3 <- ggplot(data1_R3,aes(x=Intercept)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histo.beta_prop_R3
+
+# Bandwidth elegido por CV
+bw.1_R3 <- bw.gwr(prop_imp_R3 ~ 1, data=data_sp,
+                  approach = "CV",kernel = "tricube", adaptive = TRUE)
+bw.1_R3
+gwr.cv_R3 <- gwr.basic(prop_imp_R3 ~ 1, data=data_sp,
+                       bw = bw.1, kernel = "tricube", adaptive = TRUE)
+print(gwr.cv_R3)
+data2_R3 <- as.data.frame(gwr.cv_R3$SDF)
+histo.beta_prop2_R3 <- ggplot(data2_R3,aes(x=Intercept)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histo.beta_prop2_R3
+
+
+
+gwr.fix1_R3 <- gwr.basic(prop_imp_R3 ~ 1, data=data_sp, regression.points=grid, 
+                         bw = 225, kernel = "tricube", adaptive = TRUE)
+gwr.cv1_R3 <- gwr.basic(prop_imp_R3 ~ 1, data=data_sp, regression.points=grid, 
+                        bw = bw.1_R3, kernel = "tricube", adaptive = TRUE)
+
+#plot
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1_R3$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1_R3$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1_R3$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1_R3$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
+
+############## R4
+
+gwr.fix_R4 <- gwr.basic(prop_imp_R4 ~ 1, data=data_sp, 
+                        bw = 225, kernel = "tricube", adaptive = TRUE)
+print(gwr.fix_R4)
+data1_R4 <- as.data.frame(gwr.fix_R4$SDF)
+histo.beta_prop_R4 <- ggplot(data1_R4,aes(x=Intercept)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histo.beta_prop_R4
+
+# Bandwidth elegido por CV
+bw.1_R4 <- bw.gwr(prop_imp_R4 ~ 1, data=data_sp,
+                  approach = "CV",kernel = "tricube", adaptive = TRUE)
+bw.1_R4
+gwr.cv_R4 <- gwr.basic(prop_imp_R4 ~ 1, data=data_sp,
+                       bw = bw.1, kernel = "tricube", adaptive = TRUE)
+print(gwr.cv_R4)
+data2_R4 <- as.data.frame(gwr.cv_R4$SDF)
+histo.beta_prop2_R4 <- ggplot(data2_R4,aes(x=Intercept)) +
+  geom_density(fill="#FF6666", alpha=0.5, colour="#FF6666")
+histo.beta_prop2_R4
+
+
+
+gwr.fix1_R4 <- gwr.basic(prop_imp_R4 ~ 1, data=data_sp, regression.points=grid, 
+                         bw = 225, kernel = "tricube", adaptive = TRUE)
+gwr.cv1_R4 <- gwr.basic(prop_imp_R4 ~ 1, data=data_sp, regression.points=grid, 
+                        bw = bw.1_R4, kernel = "tricube", adaptive = TRUE)
+
+#plot
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1_R4$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1_R4$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1_R4$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1_R4$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
+
+
+
+################# Plots of each round
+
+#Plot R1
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
+
+
+#Plot R2
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1_R2$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1_R2$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1_R2$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1_R2$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
+
+
+
+#Plot R3
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1_R3$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1_R3$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1_R3$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1_R3$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
+
+#Plot R4
+par(mar = c(5, 4, 4, 8)) 
+plot(malawi_proj)
+image(gwr.cv1_R4$SDF,'Intercept',col=adjustcolor(pal(20),alpha.f=0.7), add=TRUE, legend=TRUE)
+contour(gwr.cv1_R4$SDF,'Intercept',lwd=1,add=TRUE,labcex = 0.8, col='black')
+plot(malawi_boundary, add = TRUE, col = "darkred", lwd = 2)
+legend(x = "bottomright", inset = c(0, 0.1),  # Place legend slightly outside the plot area
+       legend = round(seq(min(gwr.cv1_R4$SDF$Intercept, na.rm = TRUE),
+                          max(gwr.cv1_R4$SDF$Intercept, na.rm = TRUE),
+                          length.out = 6), 2),
+       fill = adjustcolor(pal(6), alpha.f = 0.5),
+       title = "Intercept Coefficients", cex = 0.8, xpd = TRUE)
 

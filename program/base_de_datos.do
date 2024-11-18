@@ -16,6 +16,14 @@ gl main "/Users/juansegundozapiola/Documents/Maestria/TesisMAE"
 gl input "$main/input"
 gl output "$main/output"
 
+*==============================================================================*
+*0) Key Panel ID for the 4 Rounds: 2010 - 2013 - 2016 - 2019 + Geo Coordinates
+*1) Merging Seed datasets from the Rounds together (balanced panel - plots)
+*2) Identification of Improved seeds 
+*3) Aggregation to ea_id level
+*==============================================================================*
+
+
 
 * 0) Key Panel ID for the 4 Rounds: 2010 - 2013 - 2016 - 2019 + Geo Coordinates
 *==============================================================================*
