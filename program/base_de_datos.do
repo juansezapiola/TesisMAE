@@ -265,22 +265,35 @@ forvalues round = 1/4 {
 *==============================================================================*
 
 bysort ea_id: gen n=_n
- 
-bysort ea_id: egen total_kg_R1= total(ag_h01a * (improved_R1 == 1))
 
-bysort ea_id: egen total_kg_R2= total(ag_h01a_R2 * (improved_R2 == 1))
+*Total semillas compradas por ronda y ea_id
 
-bysort ea_id: egen total_kg_R3= total(ag_h01a_R3 * (improved_R3 == 1))
+bysort ea_id: egen total_kg_R1 = total(ag_h01a)
+bysort ea_id: egen total_kg_R2 = total(ag_h01a_R2)
+bysort ea_id: egen total_kg_R3 = total(ag_h01a_R3)
+bysort ea_id: egen total_kg_R4 = total(ag_h01a_R4)
 
-bysort ea_id: egen total_kg_R4= total(ag_h01a_R4 * (improved_R4 == 1))
+
+*total semilla mejorada para cada ea_id en cada ronda 
+bysort ea_id: egen imp_kg_R1= total(ag_h01a * (improved_R1 == 1))
+bysort ea_id: egen imp_kg_R2= total(ag_h01a_R2 * (improved_R2 == 1))
+bysort ea_id: egen imp_kg_R3= total(ag_h01a_R3 * (improved_R3 == 1))
+bysort ea_id: egen imp_kg_R4= total(ag_h01a_R4 * (improved_R4 == 1))
+
+
+*Proportion of improved seeds used in each round 
+gen prop_imp_R1 = imp_kg_R1 / total_kg_R1
+gen prop_imp_R2 = imp_kg_R2 / total_kg_R2
+gen prop_imp_R3 = imp_kg_R3 / total_kg_R3
+gen prop_imp_R4 = imp_kg_R4 / total_kg_R4
 
 
 keep if n== 1
 
 
-drop seed_R1 ag_h01a seed_R2 ag_h01a_R2 seed_R3 ag_h01a_R3 seed_R4 ag_h01a_R4 improved_R1 improved_R2 improved_R3 improved_R4 n
+drop seed_R1 ag_h01a seed_R2 ag_h01a_R2 seed_R3 ag_h01a_R3 seed_R4 ag_h01a_R4 improved_R1 improved_R2 improved_R3 improved_R4 n total_kg_R1 total_kg_R2 total_kg_R3 total_kg_R4 imp_kg_R1 imp_kg_R2 imp_kg_R3 imp_kg_R4 case_id y2_hhid y3_hhid y4_hhid
 
-
+*save "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/prop_improved.dta" 
 
 
 
