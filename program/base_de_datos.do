@@ -1,5 +1,5 @@
 ********************************************************************************
-*----------------        Limpieza y Orden: Base de Datos       ----------------* 
+*----------------      Cleaning and Aggregation: Data Base     ----------------* 
 *----------------                                              ----------------*
 *----------------	         Juan Segundo Zapiola              ----------------* 
 *----------------				                               ----------------* 
@@ -305,7 +305,130 @@ drop seed_R1 ag_h01a seed_R2 ag_h01a_R2 seed_R3 ag_h01a_R3 seed_R4 ag_h01a_R4 im
 
 
 
+* 3) Aggregation - EA's and HH characteristics
+*==============================================================================*
 
+/*
+Household Characteristics:
+
+Module B:
+B03 sex
+B04 relationship to head -> HH head gender
+B05 age -> HH head age
+
+Module C:
+C09 Highest education
+
+Module E:
+E19 main wage job -> salaried employed
+
+Agriculuture Module: 
+Module H:
+H03 coupons/vouchers for seeds -> for improved
+H04 credit for seed -> for improved
+H41 left over seeds 
+T01 advice obtained -> agriculture category 
+
+
+Community Characteristics:
+
+Module F:
+F07 assist agr ext der officer live?
+F17a sellers of hybrid maize
+F18 average landholding size
+F28 agriculture based project -> F30 main focus 
+
+Module J:
+J01 org that exist in community 
+
+*/
+
+*use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/.dta", clear
+*use "$input/prop_improved.dta", clear
+
+
+*****3.1) Household Characteristics:
+
+use "$input/MWI_panel_key_R1234.dta", clear
+
+*ROUND 1:
+
+*Module B
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/hh_mod_b_10.dta", clear
+
+egen HH_head_fem = max(hh_b03 == 2 & hh_b04 == 1), by(case_id)
+egen HH_head_age = max(hh_b05a * (hh_b04 == 1)), by(case_id)
+replace HH_head_age=. if HH_head_age<1
+replace HH_head_fem=. if HH_head_age==.
+
+
+keep case_id ea_id id_code HH_head_fem HH_head_age hh_b04
+
+
+*Module C
+
+merge 1:1 case_id id_code ea_id using "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/hh_mod_c_10.dta"
+
+egen HH_head_edu= max(hh_c09 * (hh_b04 == 1)), by(case_id) 
+replace HH_head_edu=. if HH_head_edu==0
+/*
+NONE. . . 1
+PSLC. . . 2
+JCE . . . 3
+MSCE. . . 4
+NON-UNIV.DIPLOMA. 5
+UNIVER.DIPLOMA,DEGREE . 6
+POST-GRAD.DEGREE . 7
+*/
+
+keep case_id ea_id id_code hh_b04 HH_head_fem HH_head_age  HH_head_edu
+
+*Module E
+
+merge 1:1 case_id id_code ea_id using "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/hh_mod_e_10.dta"
+
+egen HH_head_salaried_emp = max(hh_e18 * (hh_b04 == 1)), by(case_id)
+*2=no 1=yes
+replace HH_head_salaried_emp=. if HH_head_salaried_emp==0
+replace HH_head_salaried_emp=0 if HH_head_salaried_emp==2
+
+keep case_id ea_id id_code HH_head_fem HH_head_age HH_head_edu HH_head_salaried_emp
+bysort case_id: gen n=_n
+keep if n==1
+drop n id_code
+
+
+*I NEED TO MERGE WITH KEY PANEL ID before aggregate
+
+
+
+*we aggregate it to ea_id level:
+
+
+egen total_females = total(HH_head_fem), by(ea_id)   // Count total female-headed households per ea_id
+egen total_households = count(HH_head_fem), by(ea_id) // Count total households per ea_id
+gen prop_female_head = total_females / total_households // Calculate the proportion
+
+egen mean_age_head = mean(HH_head_age), by(ea_id) //mean age of head 
+
+egen total_emp = total(HH_head_salaried_emp), by(ea_id)   // Count total employed per ea_id
+gen prop_salaried_head = total_emp / total_households // Calculate the proportion
+
+tab HH_head_edu, gen(education_)
+forval i = 1/7 {
+    egen total_edu_`i' = total(education_`i'), by(ea_id)
+    gen prop_head_edu_`i' = total_edu_`i' / total_households
+}
+
+
+keep case_id ea_id prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 prop_head_edu_7
+
+bysort ea_id: gen n=_n
+keep if n==1
+drop n case_id 
+
+save "$input/HH_CHAR_R1.dta", replace
 
 
 
