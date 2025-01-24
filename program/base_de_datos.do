@@ -709,6 +709,8 @@ H04 credit for seed -> for improved
 H41 left over seeds 
 Module T:
 T01 advice obtained -> agriculture category 
+Module C:
+C04 plot size
 */
 
 *****ROUND 1:
@@ -730,6 +732,15 @@ tempfile temp_data
 save `temp_data'
 
 
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_c_10.dta", clear
+
+replace ag_c04c= ag_c04a if ag_c04c==.
+bysort case_id: gen id=_n
+keep case_id ea_id id ag_c04c
+
+tempfile temp_data_2
+save `temp_data_2'
+
 use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_h_10.dta", clear
 *id for each seed cultivated (like plot id)
 bysort case_id: gen id=_n
@@ -745,8 +756,11 @@ gen left_over_seeds = (ag_h41==1)
 keep case_id ea_id id improved coupon_imp credit_imp left_over_seeds
 
 merge m:1 case_id ea_id using `temp_data'
-
 drop _merge
+merge 1:1 case_id id ea_id using `temp_data_2', force
+drop if _merge==2
+drop _merge
+
 
 *Merge with those HH that cultivate.
 merge m:1 case_id ea_id using "$input/MWI_panel_HHs_key_R1234.dta"
@@ -755,6 +769,7 @@ drop if _merge==1
 
 *we aggregate it to ea_id level:
 
+egen total_plot_size= total(ag_c04c), by(ea_id) 
 egen total_coupon = total(coupon_imp), by(ea_id)   
 egen total_plots = count(coupon_imp), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
@@ -773,7 +788,7 @@ egen total_hh = total(hh==1), by(ea_id)
 gen prop_advice = total_advice / total_hh //I have the proportion of plots that used left over seeds 
 
 
-keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice
+keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice total_plot_size
 
 bysort ea_id: gen n=_n
 keep if n==1
@@ -1038,11 +1053,21 @@ save "$input/AGRO_CHAR_R4.dta", replace
 
 ***********************3.2.3) Community Characteristics:
 
+/*
+Community Characteristics:
+
+Module F:
+F07 assist agr ext der officer live?
+F17a sellers of hybrid maize
+F18 average landholding size
+F28 agriculture based project -> F30 main focus 
+
+Module J:
+J01 org that exist in community 
+*/
 
 
-
-
-
+****** Ronda 1
 
 
 
