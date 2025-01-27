@@ -1,11 +1,11 @@
 ********************************************************************************
-*----------------      Cleaning and Aggregation: Data Base     ----------------* 
+*----------------            Data Base Assembling              ----------------* 
 *----------------                                              ----------------*
 *----------------	         Juan Segundo Zapiola              ----------------* 
 *----------------				                               ----------------* 
-*----------------           Universidad de San Andrés          ----------------* 
-*----------------              Tesis Maestría Econ             ----------------* 
-*----------------				     2024                      ----------------* 
+*----------------          Universidad de San Andrés           ----------------* 
+*----------------             Tesis Maestría Econ              ----------------* 
+*----------------				    2024                       ----------------* 
 ********************************************************************************
 
 *clean 
@@ -15,7 +15,8 @@ clear all
 gl main "/Users/juansegundozapiola/Documents/Maestria/TesisMAE"
 gl input "$main/input"
 gl output "$main/output"
-
+ 
+*INDEX
 *==============================================================================*
 *0) Key Panel ID for the 4 Rounds: 2010 - 2013 - 2016 - 2019 + Geo Coordinates
 *1) Merging Seed datasets from the Rounds together (balanced panel - plots)
@@ -23,6 +24,7 @@ gl output "$main/output"
 *3) Aggregation to ea_id level
    * 3.1) Aggregation - Proportion of Improved seed cultivated at EA_ID level
    * 3.2) Aggregation - EA's and HH characteristics
+   * 3.3) Final Aggregation - Proportion of Improved seeds, SPEI, EA's and HH characteristics
 *==============================================================================*
 
 
@@ -46,7 +48,7 @@ keep if n==1
 
 order case_id y2_hhid y3_hhid y4_hhid ea_id_R1  ea_id_R2  ea_id_R3 ea_id_R4
 
-rename ea_id_R1 ea_id
+rename ea_id_R1 ea_id 
 
 tab ea_id // 102 EA's
 
@@ -825,6 +827,16 @@ tempfile temp_data
 save `temp_data'
 
 
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_c_13.dta", clear
+
+replace ag_c04c= ag_c04a if ag_c04c==.
+bysort y2_hhid: gen id=_n
+keep y2_hhid id ag_c04c
+
+tempfile temp_data_2
+save `temp_data_2'
+
+
 use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_h_13.dta", clear
 *id for each seed cultivated (like plot id)
 bysort y2_hhid: gen id=_n
@@ -840,6 +852,10 @@ gen left_over_seeds = (ag_h41_R2==1)
 keep y2_hhid id improved coupon_imp credit_imp left_over_seeds
 
 merge m:1 y2_hhid using `temp_data'
+drop _merge
+merge 1:1 y2_hhid id using `temp_data_2', force
+drop if _merge==2
+
 
 drop _merge
 
@@ -850,6 +866,7 @@ drop if _merge==1
 
 *we aggregate it to ea_id level:
 
+egen total_plot_size= total(ag_c04c), by(ea_id) 
 egen total_coupon = total(coupon_imp), by(ea_id)   
 egen total_plots = count(coupon_imp), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
@@ -868,7 +885,7 @@ egen total_hh = total(hh==1), by(ea_id)
 gen prop_advice = total_advice / total_hh //I have the proportion of plots that used left over seeds 
 
 
-keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice
+keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice total_plot_size
 
 bysort ea_id: gen n=_n
 keep if n==1
@@ -882,8 +899,6 @@ foreach var of varlist `r(varlist)' {
 rename ea_id_R2 ea_id
 
 save "$input/AGRO_CHAR_R2.dta", replace
-
-
 
 
 *****ROUND 3:
@@ -904,6 +919,15 @@ keep y3_hhid advice
 tempfile temp_data
 save `temp_data'
 
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_c_16.dta", clear
+
+replace ag_c04c= ag_c04a if ag_c04c==.
+bysort y3_hhid: gen id=_n
+keep y3_hhid id ag_c04c
+
+tempfile temp_data_2
+save `temp_data_2'
+
 
 use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_h_16.dta", clear
 *id for each seed cultivated (like plot id)
@@ -920,6 +944,9 @@ gen left_over_seeds = (ag_h41_R3==1)
 keep y3_hhid id improved coupon_imp credit_imp left_over_seeds
 
 merge m:1 y3_hhid using `temp_data'
+drop _merge
+merge 1:1 y3_hhid id using `temp_data_2', force
+drop if _merge==2
 
 drop _merge
 
@@ -931,6 +958,7 @@ drop if advice==.
 
 *we aggregate it to ea_id level:
 
+egen total_plot_size= total(ag_c04c), by(ea_id) 
 egen total_coupon = total(coupon_imp), by(ea_id)   
 egen total_plots = count(coupon_imp), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
@@ -949,7 +977,7 @@ egen total_hh = total(hh==1), by(ea_id)
 gen prop_advice = total_advice / total_hh //I have the proportion of plots that used left over seeds 
 
 
-keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice
+keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice total_plot_size
 
 bysort ea_id: gen n=_n
 keep if n==1
@@ -987,6 +1015,15 @@ keep y4_hhid advice
 tempfile temp_data
 save `temp_data'
 
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_c_19.dta", clear
+
+replace ag_c04c= ag_c04a if ag_c04c==.
+bysort y4_hhid: gen id=_n
+keep y4_hhid id ag_c04c
+
+tempfile temp_data_2
+save `temp_data_2'
+
 
 use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_h_19.dta", clear
 *id for each seed cultivated (like plot id)
@@ -1003,6 +1040,9 @@ gen left_over_seeds = (ag_h41_R4==1)
 keep y4_hhid id improved coupon_imp credit_imp left_over_seeds
 
 merge m:1 y4_hhid using `temp_data'
+drop _merge
+merge 1:1 y4_hhid id using `temp_data_2', force
+drop if _merge==2
 
 drop _merge
 
@@ -1014,6 +1054,7 @@ drop if advice==.
 
 *we aggregate it to ea_id level:
 
+egen total_plot_size= total(ag_c04c), by(ea_id) 
 egen total_coupon = total(coupon_imp), by(ea_id)   
 egen total_plots = count(coupon_imp), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
@@ -1032,7 +1073,7 @@ egen total_hh = total(hh==1), by(ea_id)
 gen prop_advice = total_advice / total_hh //I have the proportion of plots that used left over seeds 
 
 
-keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice
+keep ea_id prop_coupon prop_credit prop_left_seeds prop_advice total_plot_size
 
 bysort ea_id: gen n=_n
 keep if n==1
@@ -1058,9 +1099,9 @@ Community Characteristics:
 
 Module F:
 F07 assist agr ext der officer live?
-F17a sellers of hybrid maize
-F18 average landholding size
-F28 agriculture based project -> F30 main focus 
+F12 sellers of hybrid maize
+F18 average landholding size (no esta en R1)
+F28 agriculture based project -> F30 main focus (no esta en R1)
 
 Module J:
 J01 org that exist in community 
@@ -1068,6 +1109,271 @@ J01 org that exist in community
 
 
 ****** Ronda 1
+
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_cf_10.dta", clear
+
+
+codebook com_cf07 // Does  an Assistant Ag Extension Development Officer live in this community? 1: Y 2: N
+
+gen assistant_ag_officer = .
+replace assistant_ag_officer=1 if com_cf07==1
+replace assistant_ag_officer=0 if com_cf07==2
+
+rename com_cf12 maize_hybrid_sellers
+
+keep ea_id assistant_ag_officer maize_hybrid_sellers
+
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R1
+}
+
+rename ea_id_R1 ea_id
+
+tempfile temp_data
+save `temp_data'
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_cj_10.dta", clear
+
+codebook com_cj0b
+label list  COM_CJ0B // 302 Agricultural Coop
+
+keep if com_cj0b== 302
+
+gen agri_coop = .
+replace agri_coop=1 if com_cj01==1
+replace agri_coop=0 if com_cj01==2
+label variable agri_coop "Do they have an Agricultural Coop in community?"
+
+replace com_cj04=0 if com_cj04==.
+rename com_cj04 members_agri_coop
+keep ea_id agri_coop members_agri_coop
+
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R1
+}
+
+rename ea_id_R1 ea_id
+
+merge m:1 ea_id using `temp_data'
+drop _merge
+
+merge 1:m ea_id using "$input/ea_coordinates.dta"
+drop if _merge==1
+drop _merge
+
+order ea_id latitude longitude
+
+save "$input/COMM_CHAR_R1.dta", replace
+
+
+
+
+****** Ronda 2
+
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_mod_f1_13.dta", clear
+
+
+codebook com_cf07 // Does  an Assistant Ag Extension Development Officer live in this community? 1: Y 2: N
+
+gen assistant_ag_officer = .
+replace assistant_ag_officer=1 if com_cf07==1
+replace assistant_ag_officer=0 if com_cf07==2
+
+rename com_cf12 maize_hybrid_sellers
+
+keep ea_id assistant_ag_officer maize_hybrid_sellers
+
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R2
+}
+
+rename ea_id_R2 ea_id
+
+tempfile temp_data
+save `temp_data'
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_mod_j_13.dta", clear
+
+codebook com_cj0b
+label list  COM_CJ0B // 302 Agricultural Coop
+
+keep if com_cj0b== 302
+
+gen agri_coop = .
+replace agri_coop=1 if com_cj01==1
+replace agri_coop=0 if com_cj01==2
+label variable agri_coop "Do they have an Agricultural Coop in community?"
+
+replace com_cj04=0 if com_cj04==.
+rename com_cj04 members_agri_coop
+keep ea_id agri_coop members_agri_coop
+
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R2
+}
+
+rename ea_id_R2 ea_id
+
+merge m:1 ea_id using `temp_data'
+drop _merge
+
+merge 1:m ea_id using "$input/ea_coordinates.dta"
+drop if _merge==1
+drop _merge
+
+order ea_id latitude longitude
+
+save "$input/COMM_CHAR_R2.dta", replace
+
+
+
+
+****** Ronda 3
+
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_cf1_16.dta", clear
+
+
+
+gen assistant_ag_officer = .
+replace assistant_ag_officer=1 if com_cf07==1
+replace assistant_ag_officer=0 if com_cf07==2
+
+rename com_cf12 maize_hybrid_sellers
+
+keep ea_id assistant_ag_officer maize_hybrid_sellers
+bysort ea_id: gen n=_n
+drop if n==2
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R3
+}
+
+rename ea_id_R3 ea_id
+duplicates list ea_id
+
+tempfile temp_data
+save `temp_data'
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_cj_16.dta", clear
+
+
+keep if com_cj0b== 302
+
+gen agri_coop = .
+replace agri_coop=1 if com_cj01==1
+replace agri_coop=0 if com_cj01==2
+label variable agri_coop "Do they have an Agricultural Coop in community?"
+
+replace com_cj04=0 if com_cj04==.
+rename com_cj04 members_agri_coop
+keep ea_id agri_coop members_agri_coop
+bysort ea_id: gen n=_n
+drop if n==2
+
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R3
+}
+
+rename ea_id_R3 ea_id
+
+merge m:1 ea_id using `temp_data', force
+drop _merge
+
+merge 1:m ea_id using "$input/ea_coordinates.dta"
+drop if _merge==1
+drop _merge
+
+order ea_id latitude longitude
+drop n_R3
+save "$input/COMM_CHAR_R3.dta", replace
+
+
+
+****** Ronda 4
+
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_cf1_19.dta", clear
+
+
+
+gen assistant_ag_officer = .
+replace assistant_ag_officer=1 if com_cf07==1
+replace assistant_ag_officer=0 if com_cf07==2
+
+rename com_cf12 maize_hybrid_sellers
+
+keep ea_id assistant_ag_officer maize_hybrid_sellers
+bysort ea_id: gen n=_n
+drop if n==2
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R4
+}
+
+rename ea_id_R4 ea_id
+duplicates list ea_id
+
+tempfile temp_data
+save `temp_data'
+
+use "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/com_cj_19.dta", clear
+
+
+keep if com_cj0b== 302
+
+gen agri_coop = .
+replace agri_coop=1 if com_cj01==1
+replace agri_coop=0 if com_cj01==2
+label variable agri_coop "Do they have an Agricultural Coop in community?"
+
+replace com_cj04=0 if com_cj04==.
+rename com_cj04 members_agri_coop
+keep ea_id agri_coop members_agri_coop
+bysort ea_id: gen n=_n
+drop if n==2
+
+ds
+foreach var of varlist `r(varlist)' {
+    rename `var' `var'_R4
+}
+
+rename ea_id_R4 ea_id
+
+merge m:1 ea_id using `temp_data', force
+drop _merge
+
+merge 1:m ea_id using "$input/ea_coordinates.dta"
+drop if _merge==1
+drop _merge
+
+order ea_id latitude longitude
+drop n_R4
+
+save "$input/COMM_CHAR_R4.dta", replace
+
+
+
+
+
+* 3.3) Final Aggregation - Proportion of Improved seeds, SPEI, EA's and HH characteristics
+*==============================================================================*
+
+
+
+
+
+
+
+
+
 
 
 
