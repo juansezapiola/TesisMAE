@@ -1362,13 +1362,117 @@ save "$input/COMM_CHAR_R4.dta", replace
 
 
 
-
 * 3.3) Final Aggregation - Proportion of Improved seeds, SPEI, EA's and HH characteristics
 *==============================================================================*
 
+*We need to aggregate prop_imporved.dta + HH_CHAR_R* + AGRO_CHAR_R* + COMM_CHAR_R* + SPEI_ea
 
 
+*Let´s start with Round 1:
 
+use "$input/prop_improved.dta", clear
+
+merge 1:1 ea_id using "$input/HH_CHAR_R1.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/AGRO_CHAR_R1.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/COMM_CHAR_R1.dta", force
+drop _merge
+
+
+*Round 2:
+
+merge 1:1 ea_id using "$input/HH_CHAR_R2.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/AGRO_CHAR_R2.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/COMM_CHAR_R2.dta", force
+drop _merge
+drop y2_hhid
+
+
+*Round 3:
+
+merge 1:1 ea_id using "$input/HH_CHAR_R3.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/AGRO_CHAR_R3.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/COMM_CHAR_R3.dta", force
+drop _merge
+drop y3_hhid
+
+
+*Round 4:
+
+merge 1:1 ea_id using "$input/HH_CHAR_R4.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/AGRO_CHAR_R4.dta", force
+drop _merge
+
+merge 1:1 ea_id using "$input/COMM_CHAR_R4.dta", force
+drop _merge
+drop y4_hhid
+
+
+*Let's add SPEI
+
+merge 1:1 ea_id using "$input/SPEI_ea.dta", force
+drop _merge
+
+*Now all the variables are togheter, but we need it as a panel. 
+
+rename SPEI_2009 SPEI_R1
+rename SPEI_2012 SPEI_R2
+rename SPEI_2015 SPEI_R3
+rename SPEI_2018 SPEI_R4
+
+
+reshape long prop_imp_R prop_female_head_R mean_age_head_R prop_salaried_head_R prop_head_edu_1_R prop_head_edu_2_R prop_head_edu_3_R prop_head_edu_4_R prop_head_edu_5_R prop_head_edu_6_R prop_head_edu_7_R total_plot_size_R prop_coupon_R prop_credit_R prop_left_seeds_R prop_advice_R members_agri_coop_R agri_coop_R maize_hybrid_sellers_R assistant_ag_officer_R SPEI_R, i(ea_id) j(round)
+
+foreach var in prop_imp_R prop_female_head_R mean_age_head_R prop_salaried_head_R prop_head_edu_1_R prop_head_edu_2_R prop_head_edu_3_R prop_head_edu_4_R prop_head_edu_5_R prop_head_edu_6_R prop_head_edu_7_R total_plot_size_R prop_coupon_R prop_credit_R prop_left_seeds_R prop_advice_R members_agri_coop_R agri_coop_R maize_hybrid_sellers_R assistant_ag_officer_R SPEI_R {
+    local base = substr("`var'", 1, strpos("`var'", "_R") - 1) // Extract the part before "_R"
+    rename `var' `base' // Rename the variable
+}
+
+
+drop round
+
+bysort ea_id: gen round=_n
+
+order ea_id latitude longitude round prop_imp SPEI
+
+*Create Labels for clarity: label variable varname "Label Text"
+
+label variable prop_imp "Proportion of improved seed adoption"
+label variable SPEI "SPEI Index"
+label variable prop_female_head "Proportion of female head in households"
+label variable mean_age_head "Mean age of household head"
+label variable prop_salaried_head "Proportion being salaried employed"
+label variable prop_head_edu_1 "Proportion of head with no education"
+label variable prop_head_edu_2 "Proportion of head with PSLC education"
+label variable prop_head_edu_3 "Proportion of head with JCE education"
+label variable prop_head_edu_4 "Proportion of head with MSCE education"
+label variable prop_head_edu_5 "Proportion of head with NON-UNIV.DIPLOMA education"
+label variable prop_head_edu_6 "Proportion of head with UNIVER.DIPLOMA DEGREE education"
+label variable prop_head_edu_7 "Proportion of head with POST-GRAD.DIPLOMA DEGREE education"
+label variable total_plot_size "Plot size (ACRES)"
+label variable prop_coupon "Proportion that used coupons/vouchers for improved seeds"
+label variable prop_credit "Proportion of who had credit for improved seeds"
+label variable prop_left_seeds "Proportion who used seed left over from a previous season"
+label variable prop_advice "Proportion who obtained agriculture advice"
+label variable members_agri_coop "Number of members in the Agro Cooperation Group?"
+label variable assistant_ag_officer "Does an Assist. Agricultural Extension Development Officer live in this community?"
+label variable agri_coop "Does an Agriculture coopoeration exists in the community?"
+label variable maize_hybrid_sellers "Number of sellers of hybrid maize seed in the community"
+
+save "$input/MALAWI_panel.dta", replace
 
 
 
