@@ -1426,6 +1426,20 @@ drop y4_hhid
 merge 1:1 ea_id using "$input/SPEI_ea.dta", force
 drop _merge
 
+*As the treatment is at SPEI area level we need to create a cluster/grid ID for this as some ea_ids
+*might be have the same index due of being inside the 5kmx5km grid. 
+
+bysort SPEI_2009: gen n=_n
+gen grid_id=_n if n==1
+sort SPEI_2009
+
+replace grid_id = 47 in 48
+replace grid_id = 50 in 51
+replace grid_id = 4 in 5
+replace grid_id = 4 in 6
+replace grid_id = 4 in 7
+drop n
+
 *Now all the variables are togheter, but we need it as a panel. 
 
 rename SPEI_2009 SPEI_R1
