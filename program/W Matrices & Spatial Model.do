@@ -141,7 +141,7 @@ replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
+spwmatrix import using "$input/W5xt_bin.dta", wname(W5xt_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
@@ -188,7 +188,7 @@ replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using W10xt_bin.dta, wname(W10xt_st) row dta conn
+spwmatrix import using "$input/W10xt_bin.dta", wname(W10xt_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
@@ -235,7 +235,7 @@ replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using W11xt_bin.dta, wname(W11xt_st) row dta conn
+spwmatrix import using "$input/W11xt_bin.dta", wname(W11xt_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
@@ -281,7 +281,7 @@ replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using W12xt_bin.dta, wname(W12xt_st) row dta conn
+spwmatrix import using "$input/W12xt_bin.dta", wname(W12xt_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
