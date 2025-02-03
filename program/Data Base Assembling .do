@@ -76,6 +76,7 @@ keep case_id y2_hhid y3_hhid y4_hhid ea_id latitude longitude
 
 save "$input/MWI_panel_key_R1234.dta"
 
+*1430 hhs balanced
 
 * 1) Merging Seed datasets from the Rounds together (balanced panel - plots)
 *==============================================================================*
@@ -91,8 +92,9 @@ merge 1:m case_id using "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras
 drop if y2_hhid==""
 drop if HHID==. 
 drop if ag_h0b==. 
+drop _merge
 
-merge m:m y2_hhid using "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_h_13.dta", generate(_R2) force
+merge m:m y2_hhid using "/Users/juansegundozapiola/Documents/UdeSA/Thesis/extras/MWI 2010-2019/ag_mod_h_13.dta", force
 
 
 drop if case_id==""
@@ -1447,6 +1449,8 @@ rename SPEI_2012 SPEI_R2
 rename SPEI_2015 SPEI_R3
 rename SPEI_2018 SPEI_R4
 
+save "$input/MWI_wide.dta", replace
+*use "$input/MWI_wide.dta", clear
 
 reshape long prop_imp_R prop_female_head_R mean_age_head_R prop_salaried_head_R prop_head_edu_1_R prop_head_edu_2_R prop_head_edu_3_R prop_head_edu_4_R prop_head_edu_5_R prop_head_edu_6_R prop_head_edu_7_R total_plot_size_R prop_coupon_R prop_credit_R prop_left_seeds_R prop_advice_R members_agri_coop_R agri_coop_R maize_hybrid_sellers_R assistant_ag_officer_R SPEI_R, i(ea_id) j(round)
 

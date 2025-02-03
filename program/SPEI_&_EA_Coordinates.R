@@ -44,7 +44,7 @@ ea_coordinates <- prop_improved %>% select(-prop_imp_R1, -prop_imp_R2,
 
 #Save data base in csv file
 write.csv(ea_coordinates, file = "input/ea_coordinates.csv", row.names = FALSE)
-
+write_dta(ea_coordinates, "input/ea_coordinates.dta")
 #------------------------------------------------------------------------------#
 
 
