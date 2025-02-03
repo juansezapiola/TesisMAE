@@ -23,18 +23,16 @@ use  "$input/MALAWI_panel.dta", clear
 export delimited using "$input/MALAWI_panel.csv", replace
 *INDEX
 *==============================================================================*
-*0) Spatial W matrices 
-*1) Moran's I and LM tests -> Spatial Model 
-*2) Create Wy variable 
-
+*1) Spatial W matrices 
+*2) Moran's I and LM tests -> Spatial Model 
 
 *==============================================================================*
 
 
-* 0) Spatial W matrices 
+* 1) Spatial W matrices 
 *==============================================================================*
 
-* 5 KNN neighbours 
+******* 5 KNN neighbours 
 
 use "$input/MWI_wide.dta", clear
 
@@ -51,7 +49,7 @@ drop v1
 mkmat v2-v96, mat(W5nn_bin)
 save W5nn_bin.dta, replace
 
-spmat dta W62_st v2-v96, norm(row)
+spmat dta WK_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -60,7 +58,7 @@ mat W5xt_bin=TMAT#W5nn_bin
 svmat W5xt_bin
 save "W5xt_bin.dta", replace
 
-* Inverse Arc-Distance (100km)
+******* Inverse Arc-Distance (100km)
 
 use "$input/MWI_wide.dta", clear
 
@@ -77,7 +75,7 @@ drop v1
 mkmat v2-v96, mat(W10nn_bin)
 save W10nn_bin.dta, replace
 
-spmat dta W10_st v2-v96, norm(row)
+spmat dta WA_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -87,7 +85,7 @@ svmat W10xt_bin
 save "W10xt_bin.dta", replace
 
 
-* rook contiguity (1G)
+******* rook contiguity (1G)
 
 import delimited "$input/W_rook_contiguity_g1.csv", clear
 save "W11bin.dta", replace
@@ -105,7 +103,7 @@ mat W11xt_bin=TMAT#W11nn_bin
 svmat W11xt_bin
 save "W11xt_bin.dta", replace
 
-* rook contiguity (2G)
+******** rook contiguity (2G)
 
 import delimited "$input/W_rook_contiguity_g2.csv", clear
 save "W12bin.dta", replace
@@ -124,10 +122,19 @@ svmat W12xt_bin
 save "W12xt_bin.dta", replace
 
 
-* 1) Moran's I and LM tests -> Spatial Model  
+* 2) Moran's I and LM tests -> Spatial Model  
 *==============================================================================*
 
-* 5 KNN neighbours 
+
+
+* 5 KNN neighbours
+* Inverse Arc-Distance (100km)
+
+* Rook Contiguity - (No relevant for this work)
+
+
+
+*------------------------------ 5 KNN neighbours ------------------------------*
 
 use "$input/MALAWI_panel.dta", clear
 
@@ -141,20 +148,34 @@ replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using "$input/W5xt_bin.dta", wname(W5xt_st) row dta conn
+spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 
-
+prop_head_edu_7
 estimates store OLS
+
+* Moran's I and LM tests
+spatdiag, weights(W5xt_st)
+
+*OLS w/ Fixed Effects
+quietly tab ea_id, gen(nut)
+quietly tab round, ge(t)
+recast float nut*, force
+recast float t*, force
+
+quietly reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 t2-t4 
+estimates store OLS_fe
 
 * Moran's I and LM tests
 spatdiag, weights(W5xt_st)
 
 
 /*
+
 Test                           |  Statistic    df   p-value
 -------------------------------+----------------------------
 Spatial error:                 |
@@ -166,29 +187,141 @@ Spatial lag:                   |
   Lagrange multiplier          |     5.881      1    0.015
   Robust Lagrange multiplier   |     4.781      1    0.029
 ------------------------------------------------------------
+
+con FE
+------------------------------------------------------------
+Test                           |  Statistic    df   p-value
+-------------------------------+----------------------------
+Spatial error:                 |
+  Moran's I                    |     2.038      1    0.042
+  Lagrange multiplier          |     3.527      1    0.060
+  Robust Lagrange multiplier   |     1.613      1    0.204
+                               |
+Spatial lag:                   |
+  Lagrange multiplier          |     5.936      1    0.015
+  Robust Lagrange multiplier   |     4.022      1    0.045
+------------------------------------------------------------
+
 */
 
-*Mejor modelo SLM  : Y = \rho W Y + X \beta + \varepsilon
+*Veo SLX 
+splagvar, wname(W5xt_st) ind(prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 prop_head_edu_7 ///
+total_plot_size prop_coupon prop_credit prop_left_seeds) wfrom(Stata) order(1)
+
+quietly reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds ///
+wx_prop_female_head wx_mean_age_head wx_prop_salaried_head wx_prop_head_edu_1 ///
+wx_prop_head_edu_2 wx_prop_head_edu_3 wx_prop_head_edu_4 wx_prop_head_edu_5 wx_prop_head_edu_6 ///
+wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left_seeds t2-t4
+
+estimates store SLXpooled_fe
+spatdiag, weights(W5xt_st)
+
+/*
+------------------------------------------------------------
+Test                           |  Statistic    df   p-value
+-------------------------------+----------------------------
+Spatial error:                 |
+  Moran's I                    |     2.010      1    0.044
+  Lagrange multiplier          |     1.366      1    0.243
+  Robust Lagrange multiplier   |     3.077      1    0.079
+                               |
+Spatial lag:                   |
+  Lagrange multiplier          |     2.806      1    0.094
+  Robust Lagrange multiplier   |     4.517      1    0.034
+------------------------------------------------------------
+
+Puede ser SDM y no SDEM (no es sign al 5%)
+*/
+
+
+
+*SLM vs SARAR
+
+xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WK_st) mod(sar) r
+
+estimates store SLM
+
+
+xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe wmat(WK_st) emat(WK_st) mod(sac) r
+
+estimates store SARAR
+
+lrtest SARAR SLM //SARAR is not statistically better than SLM. p-v=1.0
+
+
+*SLM vs SDM
+
+xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe wmat(WK_st) mod(sdm) nolog effects r
+estimate store SDM
+
+
+lrtest SLM SDM //SLM is prefered p-v=0.37
+
+
+
+*SLX
+
+xtreg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds ///
+wx_prop_female_head wx_mean_age_head wx_prop_salaried_head wx_prop_head_edu_1 ///
+wx_prop_head_edu_2 wx_prop_head_edu_3 wx_prop_head_edu_4 wx_prop_head_edu_5 wx_prop_head_edu_6 ///
+wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left_seeds t2-t4, fe
+
+estimates store SLX_fe
+
+*MCO
+reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds
+
+estimates store OLS
+
+*MCO w/fixed effects
+reghdfe log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, absorb(round)
+
+estimates store OLS_fe
+
+
+
+estimates table OLS OLS_fe SLX_fe SLM SDM SARAR, b(%7.3f) star(0.1 0.05 0.01) stats(ll aic) stf(%9.0f) drop(t*)
 
 
 
 
-* Inverse Arc-Distance (100km)
+
+*Mejor modelo SLM  : Y = \rho W Y + X \beta + \varepsilon. Dependencia espacial sustantiva
+
+splagvar, wname(W5xt_st) ind(log_prop_imp) wfrom(Stata) order(1) /// creo Wy
+
+
+
+*------------------------------------------------------------------------------*
+
+
+*----------------------- Inverse Arc-Distance (100km) -------------------------*
 
 
 use "$input/MALAWI_panel.dta", clear
 
 xtset ea_id round
-
-*I do a logistic transformation to prop_imp so to have a log-likelihood function
-*I convert a proportion (which is bounded between 0 and 1) into an unbounded continuous
-*variable that can be modeled using standard regression techniques like Maximum Likelihood Estimation (MLE)
 replace prop_imp=0.999 if prop_imp==1
 replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using "$input/W10xt_bin.dta", wname(W10xt_st) row dta conn
+spwmatrix import using W10xt_bin.dta, wname(W10xt_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
@@ -201,7 +334,23 @@ estimates store OLS
 spatdiag, weights(W10xt_st)
 
 
+*OLS w/ Fixed Effects
+quietly tab ea_id, gen(nut)
+quietly tab round, ge(t)
+recast float nut*, force
+recast float t*, force
+
+quietly reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds t2-t4 
+estimates store OLS_fe
+
+* Moran's I and LM tests
+spatdiag, weights(W10xt_st)
+
+
 /*
+OLS
 ------------------------------------------------------------
 Test                           |  Statistic    df   p-value
 -------------------------------+----------------------------
@@ -214,11 +363,137 @@ Spatial lag:                   |
   Lagrange multiplier          |     9.796      1    0.002
   Robust Lagrange multiplier   |     3.465      1    0.063
 ------------------------------------------------------------
+
+OLS w/FE
+------------------------------------------------------------
+Test                           |  Statistic    df   p-value
+-------------------------------+----------------------------
+Spatial error:                 |
+  Moran's I                    |     2.981      1    0.003
+  Lagrange multiplier          |     7.684      1    0.006
+  Robust Lagrange multiplier   |     0.602      1    0.438
+                               |
+Spatial lag:                   |
+  Lagrange multiplier          |     9.937      1    0.002
+  Robust Lagrange multiplier   |     2.854      1    0.091
+------------------------------------------------------------
+
+
 */
+
+
+
+*Veo SLX 
+
+*(recordar eliminar los wx anteriores)
+splagvar, wname(W10xt_st) ind(prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 prop_head_edu_7 ///
+total_plot_size prop_coupon prop_credit prop_left_seeds) wfrom(Stata) order(1)
+
+quietly reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds ///
+wx_prop_female_head wx_mean_age_head wx_prop_salaried_head wx_prop_head_edu_1 ///
+wx_prop_head_edu_2 wx_prop_head_edu_3 wx_prop_head_edu_4 wx_prop_head_edu_5 wx_prop_head_edu_6 ///
+wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left_seeds t2-t4
+
+estimates store SLX_fe
+spatdiag, weights(W10xt_st)
+
+/*
+------------------------------------------------------------
+Test                           |  Statistic    df   p-value
+-------------------------------+----------------------------
+Spatial error:                 |
+  Moran's I                    |     1.969      1    0.049
+  Lagrange multiplier          |     0.668      1    0.414
+  Robust Lagrange multiplier   |     2.352      1    0.125
+                               |
+Spatial lag:                   |
+  Lagrange multiplier          |     1.466      1    0.226
+  Robust Lagrange multiplier   |     3.151      1    0.076
+------------------------------------------------------------
+Puede ser SDM y no SDEM 
+*/
+
+
+
+*SLM vs SARAR
+
+xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WA_st) mod(sar) r
+
+estimates store SLM
+
+
+xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe wmat(WA_st) emat(WA_st) mod(sac) r
+
+estimates store SARAR
+
+lrtest SARAR SLM //SARAR is not statistically better than SLM. p-v=1.0
+
+
+*SLM vs SDM
+
+xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe wmat(WK_st) mod(sdm) nolog effects r
+estimate store SDM
+
+
+lrtest SLM SDM //SLM is prefered p-v=0.287
+
+
+
+*SLX
+
+xtreg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds ///
+wx_prop_female_head wx_mean_age_head wx_prop_salaried_head wx_prop_head_edu_1 ///
+wx_prop_head_edu_2 wx_prop_head_edu_3 wx_prop_head_edu_4 wx_prop_head_edu_5 wx_prop_head_edu_6 ///
+wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left_seeds t2-t4, fe
+
+estimates store SLX_fe
+
+
+*MCO
+reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds
+
+estimates store OLS
+
+*MCO w/fixed effects
+reghdfe log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, absorb(round)
+
+estimates store OLS_fe
+
+
+
+estimates table OLS OLS_fe SLX_fe SLM SDM SARAR, b(%7.3f) star(0.1 0.05 0.01) stats(ll aic) stf(%9.0f) drop(t*)
+
+
+splagvar, wname(W5xt_st) ind(log_prop_imp) wfrom(Stata) order(1) /// creo Wy
+
+
 
 *Mejor modelo SLM  : Y = \rho W Y + X \beta + \varepsilon
 
 
+*------------------------------------------------------------------------------*
+
+
+
+*------------------------- Rook Contiguity (G1 & G2) --------------------------*
+
+
+*The follwing W matrices show that there is not spacial dependency.
 
 * Rook contiguity (G1)
 
@@ -226,10 +501,6 @@ Spatial lag:                   |
 use "$input/MALAWI_panel.dta", clear
 
 xtset ea_id round
-
-*I do a logistic transformation to prop_imp so to have a log-likelihood function
-*I convert a proportion (which is bounded between 0 and 1) into an unbounded continuous
-*variable that can be modeled using standard regression techniques like Maximum Likelihood Estimation (MLE)
 replace prop_imp=0.999 if prop_imp==1
 replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
@@ -272,10 +543,6 @@ Spatial lag:                   |
 use "$input/MALAWI_panel.dta", clear
 
 xtset ea_id round
-
-*I do a logistic transformation to prop_imp so to have a log-likelihood function
-*I convert a proportion (which is bounded between 0 and 1) into an unbounded continuous
-*variable that can be modeled using standard regression techniques like Maximum Likelihood Estimation (MLE)
 replace prop_imp=0.999 if prop_imp==1
 replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
@@ -311,180 +578,11 @@ Spatial lag:                   |
 */
 
 
+*I need to run a LM test in a SLX model 
 
-*2) Create Wy variable 
+
 *==============================================================================*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*MCO w/fixed effects
-reghdfe prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
-prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds prop_advice ///
-members_agri_coop agri_coop maize_hybrid_sellers ///
-assistant_ag_officer, absorb(round ea_id)
-
-estimates store ols_fe
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-*sacando esas obs que la regresion por MCO me elimina
-
-use "$input/MALAWI_panel.dta", clear
-
-drop in 375
-drop in 356
-drop in 351
-drop in 331
-drop in 311
-drop in 295
-drop in 183
-drop in 163
-drop in 144
-drop in 35
-drop in 31
-
-spwmatrix gecon latitud longitud, wn(W5bin) knn(5) xport(W5bin,txt) replace
-insheet using "W5bin.txt", delim(" ") clear
-drop in 1
-rename v1 _ID
-save "W5bin.dta", replace
-
-
-insheet using "W5bin.txt", delim(" ") clear
-drop in 1
-drop v1
-mkmat v2-v370, mat(W5nn_bin)
-save W5nn_bin.dta, replace
-
-spmat dta W57_st v2-v370, norm(row)
-drop v2-v370
-
-set matsize 656
-mat TMAT=I(1)
-mat W5xt_bin=TMAT#W5nn_bin
-svmat W5xt_bin
-save W5xt_bin.dta, replace
-
-
-use "$input/MALAWI_panel.dta", clear
-
-drop in 375
-drop in 356
-drop in 351
-drop in 331
-drop in 311
-drop in 295
-drop in 183
-drop in 163
-drop in 144
-drop in 35
-drop in 31
-
-spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
-reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
-prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds prop_advice ///
-members_agri_coop agri_coop 
-
-estimates store OLS
-*set matsize 1200
-spatdiag, weights(W5xt_st)
-
-
-
-use "$input/MALAWI_panel.dta", clear
-
-spwmatrix gecon latitud longitud, wn(W5bin) knn(5) xport(W5bin,txt) replace
-insheet using "W5bin.txt", delim(" ") clear
-drop in 1
-rename v1 _ID
-save "W5bin.dta", replace
-
-
-insheet using "W5bin.txt", delim(" ") clear
-drop in 1
-drop v1
-mkmat v2-v381, mat(W5nn_bin)
-save W5nn_bin.dta, replace
-
-spmat dta W58_st v2-v381, norm(row)
-drop v2-v381
-
-set matsize 656
-mat TMAT=I(1)
-mat W5xt_bin=TMAT#W5nn_bin
-svmat W5xt_bin
-save W5xt_bin.dta, replace
-
-
-use "$input/MALAWI_panel.dta", clear
-
-
-spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
-reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
-prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 
-
-estimates store OLS
-*set matsize 1200
-spatdiag, weights(W5xt_st)
-
-*/
-
-
-
-
-
-
-
+*==============================================================================*
 
 
 
