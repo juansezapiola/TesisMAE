@@ -19,8 +19,9 @@ gl output "$main/output"
 
 
 use  "$input/MALAWI_panel.dta", clear 
-*drop if total_plot_size==.
-export delimited using "$input/MALAWI_panel.csv", replace
+*export delimited using "$input/MALAWI_panel.csv", replace
+
+
 *INDEX
 *==============================================================================*
 *1) Spatial W matrices 
@@ -49,7 +50,7 @@ drop v1
 mkmat v2-v96, mat(W5nn_bin)
 save W5nn_bin.dta, replace
 
-spmat dta WK_st v2-v96, norm(row)
+spmat dta WKKK_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -75,7 +76,7 @@ drop v1
 mkmat v2-v96, mat(W10nn_bin)
 save W10nn_bin.dta, replace
 
-spmat dta WA_st v2-v96, norm(row)
+spmat dta WAAA_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -159,6 +160,9 @@ estimates store OLS
 * Moran's I and LM tests
 spatdiag, weights(W5xt_st)
 
+
+
+
 *OLS w/ Fixed Effects
 quietly tab ea_id, gen(nut)
 quietly tab round, ge(t)
@@ -205,6 +209,7 @@ Spatial lag:                   |
 */
 
 *Veo SLX 
+
 splagvar, wname(W5xt_st) ind(prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 prop_head_edu_7 ///
 total_plot_size prop_coupon prop_credit prop_left_seeds) wfrom(Stata) order(1)
@@ -215,6 +220,7 @@ prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds ///
 wx_prop_female_head wx_mean_age_head wx_prop_salaried_head wx_prop_head_edu_1 ///
 wx_prop_head_edu_2 wx_prop_head_edu_3 wx_prop_head_edu_4 wx_prop_head_edu_5 wx_prop_head_edu_6 ///
 wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left_seeds t2-t4
+
 
 estimates store SLXpooled_fe
 spatdiag, weights(W5xt_st)
@@ -240,11 +246,12 @@ Puede ser SDM y no SDEM (no es sign al 5%)
 
 *SLM vs SARAR
 
-xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+eststo SLM: xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WK_st) mod(sar) r
+estadd  local Time_FE "Yes"
+estadd  local EA_FE "Yes"
 
-estimates store SLM
 
 
 xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
@@ -266,6 +273,20 @@ estimate store SDM
 
 lrtest SLM SDM //SLM is prefered p-v=0.37
 
+*SDEM
+
+eststo SDEM: xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds ///
+wx_prop_female_head wx_mean_age_head wx_prop_salaried_head wx_prop_head_edu_1 ///
+wx_prop_head_edu_2 wx_prop_head_edu_3 wx_prop_head_edu_4 wx_prop_head_edu_5 wx_prop_head_edu_6 ///
+wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left_seeds t2-t4 t2-t4, fe ematrix(WK_st) model(sem) nolog r
+estadd  local Time_FE "Yes"
+estadd  local EA_FE "Yes"
+
+estimate store SDEM
+
+
 
 
 *SLX
@@ -280,30 +301,32 @@ wx_prop_head_edu_7 wx_total_plot_size wx_prop_coupon wx_prop_credit wx_prop_left
 estimates store SLX_fe
 
 *MCO
-reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+eststo OLS: reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds
+estadd  local Time_FE "NO"
+estadd  local EA_FE "No"
+
 
 estimates store OLS
 
 *MCO w/fixed effects
-reghdfe log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+eststo OLS_fe: reghdfe log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, absorb(round)
+estadd  local Time_FE "Yes"
+estadd  local EA_FE "No"
 
 estimates store OLS_fe
 
 
 
-estimates table OLS OLS_fe SLX_fe SLM SDM SARAR, b(%7.3f) star(0.1 0.05 0.01) stats(ll aic) stf(%9.0f) drop(t*)
-
-
-
+estimates table SLM, b(%7.3f) se p stats(N ll aic) stf(%9.0f) drop(t*)
 
 
 *Mejor modelo SLM  : Y = \rho W Y + X \beta + \varepsilon. Dependencia espacial sustantiva
 
-splagvar, wname(W5xt_st) ind(log_prop_imp) wfrom(Stata) order(1) /// creo Wy
+splagvar, wname(W5xt_st) ind(log_prop_imp) wfrom(Stata) order(1) 
 
 
 
@@ -341,8 +364,7 @@ recast float nut*, force
 recast float t*, force
 
 quietly reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
-prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds t2-t4 
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 prop_head_edu_7 t2-t4 
 estimates store OLS_fe
 
 * Moran's I and LM tests
@@ -475,11 +497,12 @@ prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, absorb(
 estimates store OLS_fe
 
 
+estimates table SLM, b(%7.3f) se p stats(N ll aic) stf(%9.0f) drop(t*)
 
 estimates table OLS OLS_fe SLX_fe SLM SDM SARAR, b(%7.3f) star(0.1 0.05 0.01) stats(ll aic) stf(%9.0f) drop(t*)
 
 
-splagvar, wname(W5xt_st) ind(log_prop_imp) wfrom(Stata) order(1) /// creo Wy
+splagvar, wname(W10xt_st) ind(log_prop_imp) wfrom(Stata) order(1) 
 
 
 
