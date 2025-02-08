@@ -52,7 +52,7 @@ spwmatrix import using W10xt_bin.dta, wname(W10xt_st) row dta conn
 
 xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAA_st) mod(sar) r
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) r
 
 estimates store SLM_2
 
@@ -61,13 +61,6 @@ estimates store SLM_2
 
 *2) SLM Shock Interraction Model 
 *==============================================================================*
-
-
-use "$input/MALAWI_panel_Wy.dta", clear
-
-*set Panel
-
-xtset ea_id round
 
 
 gen sev_shock=1 if SPEI<-1.49 
@@ -118,24 +111,37 @@ xsmle log_prop_imp sev_shock prop_female_head mean_age_head prop_salaried_head p
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar)  vce(cluster grid_id) 
 
+estimates store SLM_sev_shock
+
+
 *more severe shock 
 xsmle log_prop_imp Sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar)  vce(cluster grid_id) 
 
+estimates store SLM_Sev_shock
+
+*Interaction effect shock and WY
 
 gen sev_wy = sev_shock * Wy_1
 gen Sev_wy = Sev_shock * Wy_1
 
 
-xsmle log_prop_imp sev_shock sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle log_prop_imp sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar) vce(cluster grid_id) 
 
-xsmle log_prop_imp Sev_shock Sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+estimates store SLM_sev_wy
+
+
+xsmle log_prop_imp Sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar) vce(cluster grid_id) 
 
+estimates store SLM_Sev_wy
+
+
+estimates table SLM SLM_sev_shock SLM_sev_wy SLM_Sev_shock SLM_Sev_wy, b(%7.3f) se p stats(N ll aic) stf(%9.0f) drop(t*)
 
 
 *Inverse Arc_distance (100km)
@@ -145,26 +151,45 @@ xsmle log_prop_imp sev_shock prop_female_head mean_age_head prop_salaried_head p
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) vce(cluster grid_id)
 
+estimates store SLM_sev_shock_2
+
+
+
 *more severe shock
 xsmle log_prop_imp Sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) vce(cluster grid_id)
 
+estimates store SLM_Sev_shock_2
+
+
+*Interaction effect shock and WY
 
 gen sev_wy_2 = sev_shock * Wy_2
 gen Sev_wy_2 = Sev_shock * Wy_2
 
 
-xsmle log_prop_imp sev_shock sev_wy_2 prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle log_prop_imp sev_wy_2 prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) vce(cluster grid_id)
 
-xsmle log_prop_imp Sev_shock Sev_wy_2 prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+estimates store SLM_sev_wy_2
+
+
+xsmle log_prop_imp Sev_wy_2 prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
 prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) vce(cluster grid_id)
+*Sign al 5%
+estimates store SLM_Sev_wy_2
 
+
+estimates table SLM_2 SLM_sev_shock_2 SLM_sev_wy_2 SLM_Sev_shock_2 SLM_Sev_wy_2, b(%7.3f) se p stats(N ll aic) stf(%9.0f) drop(t*)
 
 *==============================================================================*
+
+*Pensar como estructurar la tabla
+*Preguntar si poner ese interraction effect no hay problema con multicolinealidad perf con rho. 
+
 
 
 
