@@ -54,27 +54,51 @@ write_dta(ea_coordinates, "input/ea_coordinates.dta")
 malawi <- read.csv("input/ea_coordinates.csv")
 
 #SPEI Raster - 3 month SPEI
-SPEI_3 <- brick(here::here("/Users/juansegundozapiola/Documents/UdeSA/Thesis/
-                           Africa_spei03.nc"), varname= "spei")
+SPEI_3 <- brick(here::here("/Users/juansegundozapiola/Documents/UdeSA/Thesis/Africa_spei03.nc"), varname= "spei")
 
 #Plot SPEI Index map: Africa
 plot(SPEI_3$X1990.06.01)
 
 #Let's crop it to the size of Malawi, using a SHP of Malawi:
 
-malawi_boundary <- st_read("/Users/juansegundozapiola/Documents/UdeSA/Thesis/
-                           mwi_adm_nso_hotosm_20230405_shp/mwi_admbnda_adm0_nso_
-                           hotosm_20230405.shp")
+malawi_boundary <- st_read("/Users/juansegundozapiola/Documents/UdeSA/Thesis/mwi_adm_nso_hotosm_20230405_shp/mwi_admbnda_adm0_nso_hotosm_20230405.shp")
 
 # Crop and mask the raster using Malawi's boundary
 malawi_crop <- crop(SPEI_3, extent(malawi_boundary))
 malawi_mask <- mask(malawi_crop, malawi_boundary)
 
 #Plot example.
-plot(malawi_mask$X2009.02.01) #
+plot(malawi_mask$X2009.02.01, axes = FALSE, box = FALSE, zlim = c(-2, 2))
+box(lwd = 1)
 points(malawi$longitude, malawi$latitude, pch = 20, col = "darkred",  cex = 0.5)
 # Add the Malawi boundary as a thin border
 plot(st_geometry(malawi_boundary), add = TRUE, border = "black", lwd = 0.5)
+
+plot(malawi_mask$X2012.02.01, axes = FALSE, box = FALSE, zlim = c(-2, 2))
+box(lwd = 1)
+points(malawi$longitude, malawi$latitude, pch = 20, col = "darkred",  cex = 0.5)
+# Add the Malawi boundary as a thin border
+plot(st_geometry(malawi_boundary), add = TRUE, border = "black", lwd = 0.5)
+
+plot(malawi_mask$X2015.02.01, axes = FALSE, box = FALSE, zlim = c(-2, 2))
+box(lwd = 1)
+points(malawi$longitude, malawi$latitude, pch = 20, col = "darkred",  cex = 0.5)
+# Add the Malawi boundary as a thin border
+plot(st_geometry(malawi_boundary), add = TRUE, border = "black", lwd = 0.5)
+
+
+plot(malawi_mask$X2018.02.01, axes = FALSE, box = FALSE, zlim = c(-2, 2))
+box(lwd = 1)
+points(malawi$longitude, malawi$latitude, pch = 20, col = "darkred",  cex = 0.5)
+# Add the Malawi boundary as a thin border
+plot(st_geometry(malawi_boundary), add = TRUE, border = "black", lwd = 0.5)
+
+
+
+
+
+
+
 
 
 # Extract SPEI data for the EA's Coordinates
