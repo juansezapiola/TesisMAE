@@ -21,28 +21,42 @@ gl output "$main/output"
 *INDEX
 *==============================================================================*
 
+*0) No Spatial Model
+
 *1) SLM -no shock- Model
 
 *2) SLM Shock Interraction Model 
 
 *==============================================================================*
 
-
-* 1) SLM -no shock- Model
+* 0) No Spatial Model
 *==============================================================================*
-
-use "$input/MALAWI_panel_Wy.dta", clear
+use "$input/MALAWI_panel_Wy_2.dta", clear
 
 *set Panel
 xtset ea_id round
 
+*no fixed effects
+reg prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, robust
+estat ic 
+*w/ fixed effects
+reghdfe prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, absorb(round ea_id) 
+estat ic 
 
+
+
+* 1) SLM -no shock- Model
+*==============================================================================*
 spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
 
-
-xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+*To make this run go to W Matrices & Spatial Model do file and run again the W matrix with another name 
+xsmle prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar) r
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKK5N_st) mod(sar) r effects
 
 estimates store SLM
 
@@ -50,9 +64,9 @@ estimates store SLM
 
 spwmatrix import using W10xt_bin.dta, wname(W10xt_st) row dta conn
 
-xsmle log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) r
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WARC_st) mod(sar) r effects
 
 estimates store SLM_2
 
@@ -107,36 +121,36 @@ tab Sev_shock round
 *5KNN
 
 * severe shock 
-xsmle log_prop_imp sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar)  vce(cluster grid_id) 
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKK5N_st) mod(sar)  vce(cluster grid_id) 
 
 estimates store SLM_sev_shock
 
 
 *more severe shock 
-xsmle log_prop_imp Sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp Sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar)  vce(cluster grid_id) 
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKK5N_st) mod(sar)  vce(cluster grid_id) 
 
 estimates store SLM_Sev_shock
 
 *Interaction effect shock and WY
 
-gen sev_wy = sev_shock * Wy_1
-gen Sev_wy = Sev_shock * Wy_1
+gen sev_wy = sev_shock * Wy_prop
+gen Sev_wy = Sev_shock * Wy_prop
 
 
-xsmle log_prop_imp sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar) vce(cluster grid_id) 
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKK5N_st) mod(sar) vce(cluster grid_id) 
 
 estimates store SLM_sev_wy
 
 
-xsmle log_prop_imp Sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp Sev_wy prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKKK_st) mod(sar) vce(cluster grid_id) 
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WKK5N_st) mod(sar) vce(cluster grid_id) 
 
 estimates store SLM_Sev_wy
 
@@ -147,18 +161,18 @@ estimates table SLM SLM_sev_shock SLM_sev_wy SLM_Sev_shock SLM_Sev_wy, b(%7.3f) 
 *Inverse Arc_distance (100km)
 
 * severe shock
-xsmle log_prop_imp sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) vce(cluster grid_id)
+prop_head_edu_7 prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WARC_st) mod(sar) vce(cluster grid_id)
 
 estimates store SLM_sev_shock_2
 
 
 
 *more severe shock
-xsmle log_prop_imp Sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
+xsmle prop_imp Sev_shock prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WAAA_st) mod(sar) vce(cluster grid_id)
+prop_head_edu_7  prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WARC_st) mod(sar) vce(cluster grid_id)
 
 estimates store SLM_Sev_shock_2
 

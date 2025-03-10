@@ -760,7 +760,10 @@ gen coupon_imp = (improved==1 & ag_h03==1)
 gen credit_imp = (improved==1 & ag_h04==1)
 gen left_over_seeds = (ag_h41==1)
 
-keep case_id ea_id id improved coupon_imp credit_imp left_over_seeds
+gen coupon = (ag_h03==1)
+gen credit = (ag_h04==1)
+
+keep case_id ea_id id improved coupon credit coupon_imp credit_imp left_over_seeds
 
 merge m:1 case_id ea_id using `temp_data'
 drop _merge
@@ -777,11 +780,11 @@ drop if _merge==1
 *we aggregate it to ea_id level:
 
 egen total_plot_size= total(ag_c04c), by(ea_id) 
-egen total_coupon = total(coupon_imp), by(ea_id)   
-egen total_plots = count(coupon_imp), by(ea_id) 
+egen total_coupon = total(coupon), by(ea_id)   
+egen total_plots = count(coupon), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
 
-egen total_credit = total(credit_imp), by(ea_id)   
+egen total_credit = total(credit), by(ea_id)   
 gen prop_credit = total_credit / total_plots //I have the proportion of plots that used credit to purchase improved seeds 
 
 egen total_left_seeds = total(left_over_seeds), by(ea_id)   
@@ -809,7 +812,6 @@ foreach var of varlist `r(varlist)' {
 rename ea_id_R1 ea_id
 
 save "$input/AGRO_CHAR_R1.dta", replace
-
 
 
 
@@ -854,7 +856,11 @@ gen coupon_imp = (improved==1 & ag_h03_R2==1)
 gen credit_imp = (improved==1 & ag_h04_R2==1)
 gen left_over_seeds = (ag_h41_R2==1)
 
-keep y2_hhid id improved coupon_imp credit_imp left_over_seeds
+gen coupon = (ag_h03==1)
+gen credit = (ag_h04==1)
+
+
+keep y2_hhid id improved coupon credit coupon_imp credit_imp left_over_seeds
 
 merge m:1 y2_hhid using `temp_data'
 drop _merge
@@ -872,11 +878,11 @@ drop if _merge==1
 *we aggregate it to ea_id level:
 
 egen total_plot_size= total(ag_c04c), by(ea_id) 
-egen total_coupon = total(coupon_imp), by(ea_id)   
-egen total_plots = count(coupon_imp), by(ea_id) 
+egen total_coupon = total(coupon), by(ea_id)   
+egen total_plots = count(coupon), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
 
-egen total_credit = total(credit_imp), by(ea_id)   
+egen total_credit = total(credit), by(ea_id)   
 gen prop_credit = total_credit / total_plots //I have the proportion of plots that used credit to purchase improved seeds 
 
 egen total_left_seeds = total(left_over_seeds), by(ea_id)   
@@ -946,7 +952,11 @@ gen coupon_imp = (improved==1 & ag_h03_R3==1)
 gen credit_imp = (improved==1 & ag_h04_R3==1)
 gen left_over_seeds = (ag_h41_R3==1)
 
-keep y3_hhid id improved coupon_imp credit_imp left_over_seeds
+gen coupon = (ag_h03==1)
+gen credit = (ag_h04==1)
+
+
+keep y3_hhid id improved credit coupon coupon_imp credit_imp left_over_seeds
 
 merge m:1 y3_hhid using `temp_data'
 drop _merge
@@ -964,11 +974,11 @@ drop if advice==.
 *we aggregate it to ea_id level:
 
 egen total_plot_size= total(ag_c04c), by(ea_id) 
-egen total_coupon = total(coupon_imp), by(ea_id)   
-egen total_plots = count(coupon_imp), by(ea_id) 
+egen total_coupon = total(coupon), by(ea_id)   
+egen total_plots = count(coupon), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
 
-egen total_credit = total(credit_imp), by(ea_id)   
+egen total_credit = total(credit), by(ea_id)   
 gen prop_credit = total_credit / total_plots //I have the proportion of plots that used credit to purchase improved seeds 
 
 egen total_left_seeds = total(left_over_seeds), by(ea_id)   
@@ -1042,7 +1052,11 @@ gen coupon_imp = (improved==1 & ag_h03_R4==1)
 gen credit_imp = (improved==1 & ag_h04_R4==1)
 gen left_over_seeds = (ag_h41_R4==1)
 
-keep y4_hhid id improved coupon_imp credit_imp left_over_seeds
+gen coupon = (ag_h03==1)
+gen credit = (ag_h04==1)
+
+
+keep y4_hhid id improved coupon credit coupon_imp credit_imp left_over_seeds
 
 merge m:1 y4_hhid using `temp_data'
 drop _merge
@@ -1060,11 +1074,11 @@ drop if advice==.
 *we aggregate it to ea_id level:
 
 egen total_plot_size= total(ag_c04c), by(ea_id) 
-egen total_coupon = total(coupon_imp), by(ea_id)   
-egen total_plots = count(coupon_imp), by(ea_id) 
+egen total_coupon = total(coupon), by(ea_id)   
+egen total_plots = count(coupon), by(ea_id) 
 gen prop_coupon = total_coupon / total_plots //I have the proportion of plots that used coupons to purchase improved seeds
 
-egen total_credit = total(credit_imp), by(ea_id)   
+egen total_credit = total(credit), by(ea_id)   
 gen prop_credit = total_credit / total_plots //I have the proportion of plots that used credit to purchase improved seeds 
 
 egen total_left_seeds = total(left_over_seeds), by(ea_id)   

@@ -109,7 +109,20 @@ prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds {
 
 
 
-
+bysort hh_improved: summarize HH_head_fem HH_head_age HH_head_salaried_emp ///
+education_1 education_2 education_3 education_4 education_5 education_6 ///
+education_7 prop_coupon prop_credit prop_left_seeds prop_free advice ///
+total_plot_size proportion_cover prop_sandy prop_between prop_clay ///
+prop_other prop_good prop_fair prop_poor prop_flat prop_slight ///
+prop_moderate prop_steep prop_divert_stream prop_bucket prop_hand_pump ///
+prop_treadle_pump prop_motor_pump prop_gravity prop_rainfed prop_other_ ///
+prop_can_irrigation prop_no_erosion prop_low_erosion prop_moderate_erosion ///
+prop_high_erosion prop_terrain prop_flooding prop_wind prop_animals ///
+prop_other_constraint prop_no_erosion_control prop_terraces ///
+prop_erosion_bunds prop_gabions_sandbags prop_vetiver_grass ///
+prop_tree_belts prop_water_harvest_bunds prop_drainage_ditches ///
+prop_other_erosion_control prop_swamp total_yield_projects ///
+total_imp_projects maize_hybrid_sellers assistant_ag_officer
 
 
 
