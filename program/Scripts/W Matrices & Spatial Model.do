@@ -50,7 +50,7 @@ drop v1
 mkmat v2-v96, mat(W5nn_bin)
 save W5nn_bin.dta, replace
 
-spmat dta WKKK5N_st v2-v96, norm(row)
+spmat dta Wk5N_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -76,7 +76,7 @@ drop v1
 mkmat v2-v96, mat(W10nn_bin)
 save W10nn_bin.dta, replace
 
-spmat dta W100ARC_st v2-v96, norm(row)
+spmat dta W100arc_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -102,7 +102,7 @@ drop v1
 mkmat v2-v96, mat(W80nn_bin)
 save W80nn_bin.dta, replace
 
-spmat dta W80ARC_st v2-v96, norm(row)
+spmat dta W80arc80_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -110,6 +110,7 @@ mat TMAT=I(4)
 mat W80xt_bin=TMAT#W80nn_bin
 svmat W80xt_bin
 save "W80xt_bin.dta", replace
+
 
 
 ******* Inverse Arc-Distance (120km)]
@@ -129,7 +130,7 @@ drop v1
 mkmat v2-v96, mat(W120nn_bin)
 save W120nn_bin.dta, replace
 
-spmat dta W120ARC_st v2-v96, norm(row)
+spmat dta W120arc_st v2-v96, norm(row)
 drop v2-v96
 
 set matsize 656
@@ -203,7 +204,7 @@ replace prop_imp = 0.001 if prop_imp == 0
 gen log_prop_imp= log(prop_imp/(1-prop_imp))
 
 
-spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
+spwmatrix import using W5xt_bin.dta, wname(WKKK5N_st) row dta conn
 
 *OLS regresion 
 reg log_prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
@@ -653,21 +654,21 @@ estimates store SARAR
 
 xsmle prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(WARC_st) mod(sar) r
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe type(both) wmat(W100arc_st) mod(sar) r
 
 estimates store SLM
 
 xsmle prop_imp prop_female_head mean_age_head prop_salaried_head prop_head_edu_1 ///
 prop_head_edu_2 prop_head_edu_3 prop_head_edu_4 prop_head_edu_5 prop_head_edu_6 ///
-prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe wmat(WARC_st) emat(WARC_st) mod(sac) r
+prop_head_edu_7 total_plot_size prop_coupon prop_credit prop_left_seeds, fe wmat(W100arc_st) emat(W100arc_st) mod(sac) type(both) nolog r 
 
 estimates store SARAR
 
 lrtest SARAR SLM //SARAR is not statistically better than SLM. p-v=1.0
 
 /*
-Likelihood-ratio test                                 LR chi2(1)  =     -1.34
-(Assumption: SLM nested in SARAR)                     Prob > chi2 =    1.0000
+Likelihood-ratio test                                 LR chi2(1)  =      0.38
+(Assumption: SLM nested in SARAR)                     Prob > chi2 =    0.5360
 */
 
 *SLM vs SDM
