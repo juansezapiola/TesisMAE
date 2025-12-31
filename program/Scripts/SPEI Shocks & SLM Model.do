@@ -23,6 +23,8 @@ gl output "$main/output"
 
 *0) No Spatial Model
 
+*0.1) Matrices
+
 *1) SLM -no shock- Model
 
 *2) SLM Shock Interraction Model 
@@ -49,9 +51,100 @@ estat ic
 
 
 
+* 0.1) Matrices
+
+
+
+******* Inverse Arc-Distance (100km)
+
+use "$input/MWI_wide.dta", clear
+
+spwmatrix gecon latitud longitud, wn(W10bin) wtype(inv) dband(0 100) xport(W10bin,txt) replace
+insheet using "W10bin.txt", delim(" ") clear
+drop in 1
+rename v1 _ID
+save "W10bin.dta", replace
+
+
+insheet using "W10bin.txt", delim(" ") clear
+drop in 1
+drop v1
+mkmat v2-v96, mat(W10nn_bin)
+save W10nn_bin.dta, replace
+
+spmat dta W100arc_st v2-v96, norm(row)
+drop v2-v96
+
+set matsize 656
+mat TMAT=I(4)
+mat W10xt_bin=TMAT#W10nn_bin
+svmat W10xt_bin
+save "W10xt_bin.dta", replace
+
+******* Inverse Arc-Distance (80km)
+
+use "$input/MWI_wide.dta", clear
+
+spwmatrix gecon latitud longitud, wn(W80bin) wtype(inv) dband(0 80) xport(W80bin,txt) replace
+insheet using "W80bin.txt", delim(" ") clear
+drop in 1
+rename v1 _ID
+save "W80bin.dta", replace
+
+
+insheet using "W80bin.txt", delim(" ") clear
+drop in 1
+drop v1
+mkmat v2-v96, mat(W80nn_bin)
+save W80nn_bin.dta, replace
+
+spmat dta W80arc80_st v2-v96, norm(row)
+drop v2-v96
+
+set matsize 656
+mat TMAT=I(4)
+mat W80xt_bin=TMAT#W80nn_bin
+svmat W80xt_bin
+save "W80xt_bin.dta", replace
+
+
+
+******* Inverse Arc-Distance (120km)]
+
+use "$input/MWI_wide.dta", clear
+
+spwmatrix gecon latitud longitud, wn(W120bin) wtype(inv) dband(0 120) xport(W120bin,txt) replace
+insheet using "W120bin.txt", delim(" ") clear
+drop in 1
+rename v1 _ID
+save "W120bin.dta", replace
+
+
+insheet using "W120bin.txt", delim(" ") clear
+drop in 1
+drop v1
+mkmat v2-v96, mat(W120nn_bin)
+save W120nn_bin.dta, replace
+
+spmat dta W120arc_st v2-v96, norm(row)
+drop v2-v96
+
+set matsize 656
+mat TMAT=I(4)
+mat W120xt_bin=TMAT#W120nn_bin
+svmat W120xt_bin
+save "W120xt_bin.dta", replace
+
+
+
+
+
 * 1) SLM -no shock- Model
 *==============================================================================*
+use "$input/MALAWI_panel_Wy_2.dta", clear
 
+*set Panel
+xtset ea_id round
 
 *W_k
 spwmatrix import using W5xt_bin.dta, wname(W5xt_st) row dta conn
